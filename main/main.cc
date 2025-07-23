@@ -20,7 +20,7 @@
 
 #include <string.h>
 
-#define WORK 
+//#define WORK 
 
 #ifdef WORK
 #define DEVICEIP {PP_HTONL(LWIP_MAKEU32(192, 168, 0, 44))}
@@ -41,6 +41,8 @@ SemaphoreHandle_t initSemaphoreHandle;
 struct netif eth0;
 struct snmp_obj_id enterpriseOid = {.len = 7,
                                     .id = {1, 3, 6, 1, 4, 1, 12345}};
+static u8_t sysLocation[32] = "lwIP development PC";
+static u8_t sysContact[32] = "root";
 
 void lwipInit(void *params) {
 
@@ -55,15 +57,15 @@ void lwipInit(void *params) {
 
   netif_set_default(&eth0);
   netif_set_up(&eth0);
-/*
+
   snmp_threadsync_init(&snmp_mib2_lwip_locks, snmp_mib2_lwip_synchronizer);
-  snmp_mib2_set_syscontact_readonly((const u8_t *)"root", NULL);
-  snmp_mib2_set_syslocation_readonly((const u8_t *)"lwIP development PC", NULL);
+  snmp_mib2_set_syscontact(sysContact, NULL, sizeof(sysContact));
+  snmp_mib2_set_syslocation(sysLocation, NULL, sizeof(sysLocation));
   snmp_mib2_set_sysdescr((const u8_t *)"Ephphatha converter", NULL);
   snmp_set_device_enterprise_oid(&enterpriseOid);
   snmp_trap_dst_ip_set(0, &clientIp);
   snmp_trap_dst_enable(0, 1);
-*/
+
   xSemaphoreGive(initSemaphoreHandle);
 }
 
@@ -82,7 +84,7 @@ extern "C" void app_main() {
   err = dhcp_start(&eth0);
   testAssert("Unable to start DHCP!", err == ERR_OK);
   print(LOG_LEVEL_APP, "DHCP started!\n");
-  //snmp_init();
+  snmp_init();
   print(LOG_LEVEL_APP, "SNMP started!\n");
 
   while (1) 

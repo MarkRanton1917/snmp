@@ -91,26 +91,25 @@ ERROR:
 static err_t w5500Input(struct pbuf **p) {
   
   uint16_t frameLen, ptr;
-
   if (xSemaphoreTake(w5500ifMutexHandle, 10) == pdTRUE) {
+    
     bool lw5500 = wizphy_getphylink();
     bool llwip = netif_is_link_up(w5500netif);
-
+    
     if (lw5500 && !llwip)
-      netifapi_netif_set_link_up(w5500netif);
+      w5500netif->flags |= NETIF_FLAG_LINK_UP;
     else if (!lw5500 && llwip) {
-      netifapi_netif_set_link_down(w5500netif);
-      print(LOG_LEVEL_DEBUG, "No link\n");
+      w5500netif->flags &= ~NETIF_FLAG_LINK_UP;
       goto ERROR;
     }
-
+    
     if (!(getSn_SR(0) & SOCK_MACRAW)) {
       print(LOG_LEVEL_DEBUG, "No socket\n");
       goto ERROR;
     }
 
     if (!(getSn_IR(0) & Sn_IR_RECV)) {
-      print(LOG_LEVEL_DEBUG, "No data\n");
+      //print(LOG_LEVEL_DEBUG, "No data\n");
       goto ERROR;
     }
     setSn_IR(0, Sn_IR_RECV);
@@ -126,7 +125,7 @@ static err_t w5500Input(struct pbuf **p) {
       w5500Reopen();
       goto ERROR;
     }
-
+    
     if ((*p = pbuf_alloc(PBUF_RAW, (frameLen), PBUF_RAM)) == NULL) {
       ptr += frameLen;
       setSn_RX_RD(0, ptr);
@@ -168,10 +167,13 @@ ERROR:
 static void w5500InputTask(void *arg) {
   (void)arg;
   struct pbuf *p;
-  for (;;)
+  for (;;) {
+    // print(LOG_LEVEL_DEBUG, "Entered\n");
     if (w5500Input(&p) == ERR_OK)
-      if (w5500netif->input(p, w5500netif) != ERR_OK)
-        pbuf_free(p);
+    if (w5500netif->input(p, w5500netif) != ERR_OK)
+      pbuf_free(p);
+    vTaskDelay(pdMS_TO_TICKS(1));
+  }
 }
 
 err_t w5500Init(struct netif *netif) {
@@ -182,6 +184,7 @@ err_t w5500Init(struct netif *netif) {
   uint8_t mac[] = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
 
   w5500InitHardware();
+  wizphy_reset();
   wizchip_init(rx_tx_buff_sizes, rx_tx_buff_sizes);
   setSn_MR(0, (protocol | flag));
   setSn_IR(0, 0xFF);

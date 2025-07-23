@@ -9,7 +9,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-#define LOG_LEVEL LOG_LEVEL_DEBUG
+#define LOG_LEVEL LOG_LEVEL_APP
 static void startPrintTask(void *argument);
 static int printCore(const char *, va_list);
 
@@ -46,14 +46,16 @@ int printAssert(const char *message) {
 }
 
 void printInit() {
+#if LOG_LEVEL != LOG_LEVEL_NONE
   printQueueHandle = xQueueCreate(256, sizeof(char *));
   xTaskCreate(startPrintTask, "printTask", 4096, NULL, 1, NULL);
+#endif
 }
 
-static int printCore(const char *format, va_list args) {
+static int printCore(const char *format, va_list args) {  
+#if LOG_LEVEL != LOG_LEVEL_NONE
   int len;
   char *msg;
-  
   vsnprintf(buf, 256, format, args);
   len = strlen(buf);
 
@@ -64,9 +66,11 @@ static int printCore(const char *format, va_list args) {
   if (xQueueSend(printQueueHandle, &msg, pdMS_TO_TICKS(100) == pdPASS))
     return len;
   vPortFree(msg);
+#endif
   return -1;
 }
 
+#if LOG_LEVEL != LOG_LEVEL_NONE
 static void startPrintTask(void *argument) {
   (void)argument;
   char *msg;
@@ -79,3 +83,4 @@ static void startPrintTask(void *argument) {
     vPortFree(msg);
   }
 }
+#endif
