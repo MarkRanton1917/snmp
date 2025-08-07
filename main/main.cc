@@ -1,6 +1,7 @@
 #include "main.h"
 #include "eth.h"
 #include "print.h"
+#include "snmpv3.h"
 
 #include <Arduino.h>
 
@@ -11,6 +12,8 @@
 #include <lwip/api.h>
 #include <lwip/apps/snmp.h>
 #include <lwip/apps/snmp_mib2.h>
+#include <lwip/apps/snmp_snmpv2_usm.h>
+#include <lwip/apps/snmp_snmpv2_framework.h>
 #include <lwip/dhcp.h>
 #include <lwip/ip4_addr.h>
 #include <lwip/netif.h>
@@ -35,6 +38,12 @@
 #endif
 
 static void maintainTask(void *arg);
+
+static const struct snmp_mib *mibs[] = {
+  &mib2,
+  &snmpframeworkmib,
+  &snmpusmmib
+};
 
 static struct snmp_obj_id enterpriseOid = {.len = 7, .id = {1, 3, 6, 1, 4, 1, 12345}};
 static u8_t sysLocation[32] = "lwIP development PC";
@@ -70,6 +79,8 @@ extern "C" void app_main()
     tcpip_init(NULL, NULL);
     print(LOG_LEVEL_APP, "Inited!\n");
     snmp_init();
+    snmpv3_dummy_init();
+    snmp_set_mibs(mibs, LWIP_ARRAYSIZE(mibs));
     print(LOG_LEVEL_APP, "SNMP started!\n");
 
     while (1)
