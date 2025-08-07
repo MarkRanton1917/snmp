@@ -1,0 +1,33 @@
+--work in progress...
+
+UNIMON-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, SEQUENCE,
+    enterprises FROM SNMPv2-SMI  
+;
+
+unimon-root MODULE-IDENTITY
+    LAST-UPDATED   ""
+    ORGANIZATION   ""
+    CONTACT-INFO   ""
+    REVISION       ""
+    DESCRIPTION    ""
+    ::= { enterprises 12345 }
+
+unimon-sensors OBJECT IDENTIFIER ::= { unimon-root 1 }
+
+unimon-sensor-type OBJECT-TYPE
+    SYNTAX      
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "some text"
+    ::= { netSnmpExampleScalars 1 }
+END
+
+Sensor ::= SEQUENCE {
+    id Integer32,
+    name OCTET STRING (SIZE (0..255)),
+    value: Integer32
+}

@@ -2,6 +2,7 @@
 #include "eth.h"
 #include "print.h"
 #include "snmpv3.h"
+#include "mib.h"
 
 #include <Arduino.h>
 
@@ -23,7 +24,7 @@
 
 #include <string.h>
 
-#define WORK
+//#define WORK
 
 #ifdef WORK
 #define DEVICEIP {PP_HTONL(LWIP_MAKEU32(192, 168, 0, 44))}
@@ -40,12 +41,12 @@
 static void maintainTask(void *arg);
 
 static const struct snmp_mib *mibs[] = {
-  &mib2,
-  &snmpframeworkmib,
-  &snmpusmmib
+	&unimonMib,
+    &mib2,
+    &snmpframeworkmib,
+    &snmpusmmib
 };
 
-static struct snmp_obj_id enterpriseOid = {.len = 7, .id = {1, 3, 6, 1, 4, 1, 12345}};
 static u8_t sysLocation[32] = "lwIP development PC";
 static u8_t sysContact[32] = "root";
 
@@ -72,14 +73,14 @@ extern "C" void app_main()
     snmp_mib2_set_syscontact(sysContact, NULL, sizeof(sysContact));
     snmp_mib2_set_syslocation(sysLocation, NULL, sizeof(sysLocation));
     snmp_mib2_set_sysdescr((const u8_t *)"Ephphatha converter", NULL);
-    snmp_set_device_enterprise_oid(&enterpriseOid);
     snmp_trap_dst_ip_set(0, &clientIp);
     snmp_trap_dst_enable(0, 1);
 
     tcpip_init(NULL, NULL);
     print(LOG_LEVEL_APP, "Inited!\n");
+	unimonMibInit();
+	snmpv3_dummy_init();
     snmp_init();
-    snmpv3_dummy_init();
     snmp_set_mibs(mibs, LWIP_ARRAYSIZE(mibs));
     print(LOG_LEVEL_APP, "SNMP started!\n");
 
