@@ -5,6 +5,7 @@
 #include "mib.h"
 
 #include <Arduino.h>
+#include <WiFi.h>
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
@@ -31,11 +32,15 @@
 #define NETMASK  {PP_HTONL(LWIP_MAKEU32(255, 255, 255, 0))}
 #define GATEWAY  {PP_HTONL(LWIP_MAKEU32(192, 168, 0, 1))}
 #define CLIENTIP {PP_HTONL(LWIP_MAKEU32(192, 168, 0, 40))}
+#define SSID "UM2"
+#define PASSWORD ""
 #else
 #define DEVICEIP {PP_HTONL(LWIP_MAKEU32(192, 168, 1, 144))}
 #define NETMASK  {PP_HTONL(LWIP_MAKEU32(255, 255, 255, 0))}
 #define GATEWAY  {PP_HTONL(LWIP_MAKEU32(192, 168, 1, 1))}
 #define CLIENTIP {PP_HTONL(LWIP_MAKEU32(192, 168, 1, 152))}
+#define SSID "Iverskaya3"
+#define PASSWORD "welcome3"
 #endif
 
 static void maintainTask(void *arg);
@@ -78,11 +83,17 @@ extern "C" void app_main()
 
     tcpip_init(NULL, NULL);
     print(LOG_LEVEL_APP, "Inited!\n");
+
 	unimonMibInit();
 	snmpv3_dummy_init();
+    
     snmp_init();
     snmp_set_mibs(mibs, LWIP_ARRAYSIZE(mibs));
     print(LOG_LEVEL_APP, "SNMP started!\n");
+
+    WiFi.begin(SSID, PASSWORD);
+    while (WiFi.status() != WL_CONNECTED);
+    print(LOG_LEVEL_APP, "Wifi connected!\n");
 
     while (1)
     {
